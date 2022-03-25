@@ -1,0 +1,12 @@
+[telegram]
+group_id=your_group_id_without_quotes
+
+[pyrogram]
+api_id=286189
+api_hash=5706e205c80a9f21c6f9edccb640dd5c
+
+[db]
+host=localhost
+user=root
+passwd=pass
+database=db_name
