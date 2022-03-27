@@ -1,47 +1,47 @@
-import mysql.connector
-from configparser import ConfigParser, ExtendedInterpolation
-
-parser = ConfigParser(interpolation=ExtendedInterpolation())
-# parser.read(os.path.abspath("config.ini"))
-script_path = __file__
-cwd = str(script_path).replace("database/db.py", "")
-parser.read(cwd + "config.ini")
-
-db_conf = {
-        'host': parser['db']['host'],
-        'user': parser['db']['user'],
-        'passwd': parser['db']['passwd'],
-        'database': parser['db']['database'],
-        "use_unicode": True,
-    }
+from settings import config
+from database.tables import list_tables
+import sqlite3
 
 
-def get_connection(db=None):
-    if db:
-        db_conf["database"] = db
-    return mysql.connector.connect(**db_conf)
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
+
+
+def get_connection():
+    con = sqlite3.connect(str(config["db_name"])+".db")
+
+    cursor = con.cursor()
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    tables = cursor.fetchall()
+    print(tables)
+    if len(tables) == 0:
+        for table in list_tables:
+            try:
+                con.cursor().execute(table)
+            except Exception as e:
+                print(e)
+    return con
 
 
 def fetch_all_with_params(conn, query, params):
-    cursor = conn.cursor(buffered=True, dictionary=True)
+    conn.row_factory = dict_factory
+    cursor = conn.cursor()
     cursor.execute(query, params)
     return cursor.fetchall()
 
 
-def fetch_all(conn, query):
-    cursor = conn.cursor(buffered=True, dictionary=True)
-    cursor.execute(query)
-    return cursor.fetchall()
-
-
 def fetch_one(conn, query, params):
-    cursor = conn.cursor(buffered=True, dictionary=True)
+    conn.row_factory = dict_factory
+    cursor = conn.cursor()
     cursor.execute(query, params)
     return cursor.fetchone()
 
 
 def commit(conn, query, params):
-    cursor = conn.cursor(buffered=True, dictionary=True)
+    cursor = conn.cursor()
     cursor.execute(query, params)
     conn.commit()
     return cursor.lastrowid
