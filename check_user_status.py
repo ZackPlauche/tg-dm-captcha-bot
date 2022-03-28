@@ -1,19 +1,14 @@
 from time import sleep
 from pyrogram import Client
 from settings import config
-from database.users_table import get_new_users, delete_user
-from database.db import get_connection
 from datetime import datetime
+from storage import get_ban_list, rm_from_ban_list
 
 
 def run():
-    conn = get_connection()
-    not_verified_users = get_new_users(conn)
-
-    for user in not_verified_users:
+    for user in get_ban_list():
         print(user)
-        # delta = datetime.now() - user["created_at"]
-        delta = datetime.now() - datetime.strptime(user["created_at"], '%Y-%m-%d %H:%M:%S')
+        delta = datetime.now() - datetime.strptime(user[1], '%Y-%m-%d %H:%M:%S')
         dif_seconds = int(abs(delta.total_seconds()))
 
         app = Client(
@@ -26,13 +21,13 @@ def run():
         if dif_seconds > 180:
             try:
                 try:
-                    app.get_chat_members(chat_id=int(config["group_id"]), filter="all", query=user["name"])
+                    app.get_chat_members(chat_id=int(config["group_id"]), filter="all", query=user[2].strip())
                 except Exception as e:
                     print(e)
 
-                app.ban_chat_member(int(config["group_id"]), int(user["chat_id"]))
+                app.ban_chat_member(int(config["group_id"]), int(user[0].strip()))
 
-                delete_user(conn, user["id"])
+                rm_from_ban_list(user[0].strip())
             except Exception as e:
                 print(e)
 
@@ -41,4 +36,4 @@ def run():
 
 while True:
     run()
-    sleep(5)
+    sleep(10)
