@@ -46,13 +46,14 @@ def get_captcha():
 
 
 @app.on_message(filters.private)
-def handle_captcha(client, message):
+async def handle_captcha(client, message):
     conn = get_connection()
     user = get_user(conn, message.chat.id)
     try:
+        print(message)
         if user and str(user["code"]).strip() == str(message.text).strip():
-            client.send_message(chat_id=int(message.from_user.id), text="Done! Now you have access to the group")
-            client.add_chat_members(int(config["group_id"]), int(message.from_user.id))
+            await client.send_message(chat_id=int(message.from_user.id), text="Done! Now you have access to the group")
+            await client.add_chat_members(int(config["group_id"]), int(message.from_user.id))
             update_user_status(conn, user["id"], STATUS_VERIFY)
             rm_from_ban_list(str(message.from_user.id))
         elif user["status"] == STATUS_NOT_VERIFY:
@@ -61,8 +62,8 @@ def handle_captcha(client, message):
                 "3")
 
             captcha = get_captcha()
-            client.send_photo(chat_id=message.chat.id, photo=os.path.abspath(captcha[0]), caption=text)
-            update_user_code(conn, user["id"], captcha[1])
+            await client.send_photo(chat_id=message.chat.id, photo=os.path.abspath(captcha[0]), caption=text)
+            await update_user_code(conn, user["id"], captcha[1])
     except Exception as e:
         print(e)
 
@@ -70,15 +71,14 @@ def handle_captcha(client, message):
 
 
 @app.on_message(filters.chat(chats=[int(config["group_id"])]))
-def new_users_handler(client, message):
-    # print(message)
+async def new_users_handler(client, message):
     if message.service and message.new_chat_members:
         for user in message.new_chat_members:
             try:
                 conn = get_connection()
-
-                if get_user(conn, str(user.id)) == None:
-                    client.ban_chat_member(int(message.chat.id), int(user.id))
+                db_user = get_user(conn, str(user.id))
+                if db_user == None or db_user["status"] == STATUS_NOT_VERIFY:
+                    await client.ban_chat_member(int(message.chat.id), int(user.id))
                     text = "Hello {}, welcome to {}. " \
                            "Please write a message with the numbers and/or letters that appear in this image to verify that you are a human. " \
                            "If you don't solve this captcha in {} minutes, you will be automatically kicked out of the group.".format(
@@ -86,7 +86,7 @@ def new_users_handler(client, message):
 
                     captcha = get_captcha()
 
-                    client.send_photo(chat_id=user.id, photo=os.path.abspath(captcha[0]), caption=text)
+                    await client.send_photo(chat_id=user.id, photo=os.path.abspath(captcha[0]), caption=text)
 
                     data = {
                         "name": get_name(user),

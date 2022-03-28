@@ -7,7 +7,7 @@ from storage import get_ban_list, rm_from_ban_list
 
 def run():
     for user in get_ban_list():
-        print(user)
+        # print(user)
         delta = datetime.now() - datetime.strptime(user[1], '%Y-%m-%d %H:%M:%S')
         dif_seconds = int(abs(delta.total_seconds()))
 
@@ -26,10 +26,10 @@ def run():
                     print(e)
 
                 app.ban_chat_member(int(config["group_id"]), int(user[0].strip()))
-
-                rm_from_ban_list(user[0].strip())
             except Exception as e:
                 print(e)
+
+            rm_from_ban_list(user[0].strip())
 
         app.stop()
 
