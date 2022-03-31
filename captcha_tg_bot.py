@@ -1,19 +1,12 @@
-from pyrogram import Client, filters
+from telethon import TelegramClient
+from telethon import events
+from telethon.tl.functions.messages import AddChatUserRequest
+from settings import config
+from captcha.image import ImageCaptcha
 from database.users_table import create_user, get_user, update_user_status, update_user_code, STATUS_VERIFY, STATUS_NOT_VERIFY
 from database.db import get_connection
-from captcha.image import ImageCaptcha
-from settings import config
-from storage import write_row_to_ban_list, rm_from_ban_list
-import datetime
-import time
 import os
 import random
-
-app = Client(
-                "captcha_bot",
-                api_id=config['api_id'],
-                api_hash=config['api_hash']
-            )
 
 
 def get_name(user):
@@ -33,7 +26,7 @@ def get_captcha():
     image = ImageCaptcha(width=250, height=90)
 
     # Image captcha text
-    captcha_text = str(random.randint(1000, 99999))
+    captcha_text = str(random.randint(1000, 9999))
 
     image.generate(captcha_text)
 
@@ -45,62 +38,69 @@ def get_captcha():
     return (captcha_image_path, captcha_text)
 
 
-@app.on_message(filters.private)
-async def handle_captcha(client, message):
-    conn = get_connection()
-    user = get_user(conn, message.chat.id)
-    try:
-        print(message)
-        if user and str(user["code"]).strip() == str(message.text).strip():
-            await client.send_message(chat_id=int(message.from_user.id), text="Done! Now you have access to the group")
-            await client.add_chat_members(int(config["group_id"]), int(message.from_user.id))
-            update_user_status(conn, user["id"], STATUS_VERIFY)
-            rm_from_ban_list(str(message.from_user.id))
-        elif user["status"] == STATUS_NOT_VERIFY:
-            text = "Please write a message with the numbers and/or letters that appear in this image to verify that you are a human. " \
-                   "If you don't solve this captcha in {} minutes, you will be automatically kicked out of the group.".format(
-                "3")
+async def joined_users_handler(event):
+    if event.user_joined:
+        chat = await event.get_chat()
+        joined_users = await event.get_users()
 
-            captcha = get_captcha()
-            await client.send_photo(chat_id=message.chat.id, photo=os.path.abspath(captcha[0]), caption=text)
-            await update_user_code(conn, user["id"], captcha[1])
-    except Exception as e:
-        print(e)
-
-    conn.close()
-
-
-@app.on_message(filters.chat(chats=[int(config["group_id"])]))
-async def new_users_handler(client, message):
-    if message.service and message.new_chat_members:
-        for user in message.new_chat_members:
+        for j_user in joined_users:
             try:
                 conn = get_connection()
-                db_user = get_user(conn, str(user.id))
+                db_user = get_user(conn, str(j_user.id))
                 if db_user == None or db_user["status"] == STATUS_NOT_VERIFY:
-                    await client.ban_chat_member(int(message.chat.id), int(user.id))
+
+                    await client.kick_participant(chat, j_user)
                     text = "Hello {}, welcome to {}. " \
                            "Please write a message with the numbers and/or letters that appear in this image to verify that you are a human. " \
                            "If you don't solve this captcha in {} minutes, you will be automatically kicked out of the group.".format(
-                        str(get_name(user)), str(message.chat.title), "3")
+                        str(get_name(j_user)), str(chat.title), "3")
 
                     captcha = get_captcha()
 
-                    await client.send_photo(chat_id=user.id, photo=os.path.abspath(captcha[0]), caption=text)
+                    await client.send_file(entity=j_user, file=os.path.abspath(captcha[0]), caption=text)
 
                     data = {
-                        "name": get_name(user),
-                        "chat_id": str(user.id),
+                        "name": get_name(j_user.id),
+                        "chat_id": str(j_user.id),
                         "code": str(captcha[1]),
                     }
                     create_user(conn, data)
-
-                    ts = time.time()
-                    write_row_to_ban_list([str(user.id), datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S'), data["name"]])
 
                 conn.close()
             except Exception as e:
                 print(e)
 
 
-app.run()
+async def private_message_handler(event):
+    if event.is_private:
+        tg_user = await event.get_chat()
+
+        conn = get_connection()
+        user = get_user(conn, tg_user.id)
+
+        try:
+            if user and str(user["code"]).strip() == str(event.text).strip():
+                await client.send_message(tg_user, "Done! Now you have access to the group")
+                await client(AddChatUserRequest(
+                    int(config["group_id"]),
+                    tg_user,
+                    fwd_limit=100
+                ))
+                update_user_status(conn, user["id"], STATUS_VERIFY)
+            elif user["status"] == STATUS_NOT_VERIFY:
+                text = "Please write a message with the numbers and/or letters that appear in this image to verify that you are a human. " \
+                       "If you don't solve this captcha in {} minutes, you will be automatically kicked out of the group.".format(
+                    "3")
+
+                captcha = get_captcha()
+                await client.send_file(entity=tg_user, file=os.path.abspath(captcha[0]), caption=text)
+                update_user_code(conn, user["id"], captcha[1])
+        except Exception as e:
+            print(e)
+
+        conn.close()
+
+with TelegramClient("captcha_bot", api_id=config['api_id'], api_hash=config['api_hash']) as client:
+    client.add_event_handler(private_message_handler, events.NewMessage)
+    client.add_event_handler(joined_users_handler, events.ChatAction)
+    client.run_until_disconnected()

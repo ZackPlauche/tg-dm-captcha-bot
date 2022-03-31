@@ -32,3 +32,4 @@ test.py
 *.log
 logs/
 Pipfile
+settings.py
