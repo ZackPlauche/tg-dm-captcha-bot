@@ -28,3 +28,4 @@ async def main():
 asyncio.run(main())
 
 login_session()
+asyncio.run(main())

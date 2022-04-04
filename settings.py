@@ -1,5 +1,5 @@
 config = {
     "api_id": 286189,
     "api_hash": "5706e205c80a9f21c6f9edccb640dd5c",
-    "group_id": -1001656046550
+    "group_id": -702471079
 }
