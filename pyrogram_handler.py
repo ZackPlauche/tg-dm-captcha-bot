@@ -1,46 +1,17 @@
+import os
+
 from pyrogram import Client, filters
 from pyrogram.types import ChatPermissions
-from storage import update_user_code, update_user_status, get_user
-from captcha.image import ImageCaptcha
-from settings import config
-import os
-import random
 
+from storage import update_user_code, update_user_status, get_user
+from settings import TELEGRAM_API_ID, TELEGRAM_API_HASH, TELEGRAM_GROUP_SUPERGROUP_ID
+from utils import get_captcha
 
 app = Client(
-                "pyrogram",
-                api_id=config['api_id'],
-                api_hash=config['api_hash']
-            )
-
-
-def get_name(user):
-    name = ""
-    try:
-        if user.first_name: name += user.first_name
-        if user.last_name: name += " " + user.last_name
-        return name.strip()
-    except Exception as e:
-        print(e)
-
-    return name
-
-
-def get_captcha():
-    # Create an image instance of the given size
-    image = ImageCaptcha(width=250, height=90)
-
-    # Image captcha text
-    captcha_text = str(random.randint(1000, 99999))
-
-    image.generate(captcha_text)
-
-    captcha_image_path = "images/" + captcha_text + '.png'
-
-    # write the image on the given file and save it
-    image.write(captcha_text, captcha_image_path)
-
-    return (captcha_image_path, captcha_text)
+    "pyrogram",
+    api_id=TELEGRAM_API_ID,
+    api_hash=TELEGRAM_API_HASH
+)
 
 
 @app.on_message(filters.private)
@@ -52,7 +23,7 @@ def handle_captcha(client, message):
             if int(user["status"]) == 0:
                 client.send_message(chat_id=int(message.from_user.id), text="Done! Now you have access to the group")
                 client.restrict_chat_member(
-                    chat_id=config["group_id"],
+                    chat_id=TELEGRAM_GROUP_SUPERGROUP_ID,
                     user_id=int(message.from_user.id),
                     permissions=ChatPermissions(
                         can_send_messages=True,
@@ -78,6 +49,5 @@ def handle_captcha(client, message):
             client.send_photo(chat_id=message.chat.id, photo=os.path.abspath(captcha[0]), caption=text)
             update_user_code(user["chat_id"], captcha[1])
     except: pass
-
 
 app.run()
