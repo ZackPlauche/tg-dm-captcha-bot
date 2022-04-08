@@ -44,9 +44,10 @@ def get_user(chat_id):
 
 
 def rm_from_ban_list(chat_id):
+    rows = get_csv_users()
     with ban_list_csv.open('w', newline='') as outcsv:
         writer = csv.writer(outcsv)
-        for row in get_csv_users():
+        for row in rows:
             if str(chat_id).strip() not in row: 
                 writer.writerow(row)
 
