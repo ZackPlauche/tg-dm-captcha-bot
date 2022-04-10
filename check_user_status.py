@@ -1,33 +1,18 @@
 import asyncio
-import os
-import time
 from datetime import datetime, timezone
 
 from telethon import TelegramClient
 from telethon.tl.functions.channels import GetAdminLogRequest, EditBannedRequest
 from telethon.tl.types import ChannelAdminLogEventsFilter, ChatBannedRights
 
-from storage import get_ban_list, write_row_to_ban_list, update_user_status, get_user
-from settings import TELEGRAM_API_ID, TELEGRAM_API_HASH, TELEGRAM_GROUP_SUPERGROUP_ID, MINUTES_UNTIL_KICK
-from utils import get_captcha
-
-
-def get_name(user):
-    name = ""
-    if hasattr(user, 'first_name'): 
-        name += user.first_name
-    if hasattr(user, 'last_name'): 
-        name += f' {user.last_name}'
-    return name.strip()
+from database import get_all_users, update_user, get_user, add_user, User
+from settings import TELEGRAM_API_ID, TELEGRAM_API_HASH, TELEGRAM_GROUP_SUPERGROUP_ID, MINUTES_UNTIL_KICK, CAPTCHA_MESSAGE_TEMPLATE
+from utils import get_image_captcha, get_name_from_tg_user
 
 
 async def check_user_status():
-    for user in get_ban_list():
-        created_at = datetime.strptime(user[1], '%Y-%m-%d %H:%M:%S')  # YYYY-MM-DD HH:MM:SS
-        status = int(user[4])
-        delta = datetime.now() - created_at
-        dif_seconds = int(abs(delta.total_seconds()))
-        if dif_seconds > 180 and status == 0:
+    for user in get_all_users():
+        if user.is_invalid():
             try:
                 client = TelegramClient('telethon', TELEGRAM_API_ID, TELEGRAM_API_HASH)
                 await client.start()
@@ -47,10 +32,10 @@ async def check_user_status():
                 async for dialog in client.iter_dialogs():
                     if int(dialog.id) == int(TELEGRAM_GROUP_SUPERGROUP_ID):
                         target_chat = dialog
-                    if int(dialog.id) == int(user[0]):
+                    if int(dialog.id) == user.chat_id:
                         target_user = dialog
                 if target_chat and target_user: await client(EditBannedRequest(target_chat, target_user, rights))
-                update_user_status(str(user[0]).strip(), 2)
+                update_user(user.chat_id, status=2)
                 await client.disconnect()
             except Exception as e:
                 print(e)
@@ -66,46 +51,39 @@ async def run():
         async for dialog in client.iter_dialogs():
             if int(dialog.id) == int(TELEGRAM_GROUP_SUPERGROUP_ID):
                 target_chat = dialog
-
-        filter_results = ChannelAdminLogEventsFilter(
-            join=True,
-            leave=False,
-            invite=False,
-            ban=False,
-            unban=False,
-            kick=False,
-            unkick=False,
-            promote=False,
-            demote=False,
-            info=False,
-            settings=False,
-            pinned=False,
-            edit=False,
-            delete=False
-        )
-        log_request = GetAdminLogRequest(
-            channel=target_chat,
-            q='',
-            max_id=0,
-            min_id=0,
-            limit=10,
-            events_filter=filter_results
-        )
-
+        filter_results = ChannelAdminLogEventsFilter(join=True,
+                                                     leave=False,
+                                                     invite=False,
+                                                     ban=False,
+                                                     unban=False,
+                                                     kick=False,
+                                                     unkick=False,
+                                                     promote=False,
+                                                     demote=False,
+                                                     info=False,
+                                                     settings=False,
+                                                     pinned=False,
+                                                     edit=False,
+                                                     delete=False)
+        log_request = GetAdminLogRequest(channel=target_chat,
+                                         q='',
+                                         max_id=0,
+                                         min_id=0,
+                                         limit=10,
+                                         events_filter=filter_results)
         result = await client(log_request)
 
         for tg_user in result.users:
+            tg_user_name = get_name_from_tg_user(tg_user)
             is_new = True
             for event in result.events:
-                print(event.date)
-                print()
-                delta = datetime.now(timezone.utc) - event.date
-
-                if event.user_id == tg_user.id and int(abs(delta.total_seconds())) > 100:
+                print(event.date, end='\n\n')
+                seconds = (datetime.now(timezone.utc) - event.date).seconds
+                if event.user_id == tg_user.id and seconds > 100:
                     is_new = False
                     break
             if is_new:
-                user_from_db = get_user(str(tg_user.id))
+                user_from_db = get_user(tg_user.id)
                 if user_from_db is None:
                     rights = ChatBannedRights(
                         until_date=None,
@@ -120,23 +98,15 @@ async def run():
                     )
 
                     await client(EditBannedRequest(target_chat, tg_user, rights))
-
-                    text = f"Hello {get_name(tg_user)}, welcome to {target_chat.title}. " \
-                            "Please write a message with the numbers and/or letters that appear in this image to verify that you are a human. " \
-                           f"If you don't solve this captcha in {MINUTES_UNTIL_KICK} minutes, you will be automatically kicked out of the group."
-
-                    captcha = get_captcha()
-
-                    await client.send_file(entity=tg_user, file=os.path.abspath(captcha[0]), caption=text)
-
-                    data = [
-                        str(tg_user.id),
-                        datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'),
-                        get_name(tg_user),
-                        str(captcha[1]),
-                        0
-                    ]
-                    write_row_to_ban_list(data)
+                    image_captcha_path, image_captcha_text = get_image_captcha()
+                    caption = CAPTCHA_MESSAGE_TEMPLATE.format(user_name=tg_user_name, group_name=target_chat.title, minutes=MINUTES_UNTIL_KICK)
+                    await client.send_file(entity=tg_user, file=image_captcha_path, caption=caption)
+                    new_user = User(chat_id=tg_user.id,
+                                    timestamp=datetime.now(),
+                                    name=get_name_from_tg_user(tg_user),
+                                    code=image_captcha_text,
+                                    status=0)
+                    add_user(new_user)
     except Exception as e: 
         print(e)
     await client.disconnect()
