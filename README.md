@@ -1,7 +1,7 @@
 # Telegram DM Captcha Bot
 
 ## Requirements
-- Python 3.6+
+- Python 3.9+
 - A telegram user account to use as the bot.
 - A **Public** telegram group with the account you're using as the bot as an Admin in that group.
 - A telegram core api account (only needed for developers)
