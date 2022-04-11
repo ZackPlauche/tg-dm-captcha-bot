@@ -26,12 +26,12 @@ class User(Base):
     def __repr__(self):
         return f'User(id={repr(self.id)}, chat_id={repr(self.chat_id)}, timestamp={repr(self.timestamp)}, name={repr(self.name)}, code={repr(self.code)}, status={repr(self.status)})'
 
-    def is_invalid(self):
+    def is_invalid(self):  # -> bool
         seconds_joined = (datetime.now() - self.timestamp).seconds
         seconds_until_kick = timedelta(minutes=MINUTES_UNTIL_KICK).seconds
         return seconds_joined > seconds_until_kick and self.is_banned()
 
-    def is_banned(self):
+    def is_banned(self):  # -> bool
         return self.status == 0
 
 Base.metadata.create_all(engine)
@@ -39,7 +39,7 @@ Base.metadata.create_all(engine)
 session = Session(engine)
 
 
-def add_user(user: User):
+def add_user(user):  # user: User
     session.add(user)
     session.commit()
     session.close()
@@ -47,22 +47,22 @@ def add_user(user: User):
 create_user = add_user
 
 
-def get_user(chat_id: int) -> User:
+def get_user(chat_id):  # chat_id: int -> User
     user = session.scalars(select(User).filter_by(chat_id=chat_id)).first()
     return user
 
 
-def get_all_users() -> list[User]:
+def get_all_users():  # -> list[User]
     users = session.scalars(select(User)).all()
     return users
 
 
-def get_banned_users() -> list[User]:
+def get_banned_users():  # -> list[User]
     users = session.scalars(select(User).filter_by(status=1)).all()
     return users
 
 
-def update_user(user, **kwargs):
+def update_user(user, **kwargs):  # user: User
     session.add(user)
     for key, value in kwargs.items():
         setattr(user, key, value)

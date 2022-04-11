@@ -4,7 +4,7 @@ from pathlib import Path
 from captcha.image import ImageCaptcha
 
 
-def get_name_from_tg_user(user):
+def get_name_from_tg_user(user):  # -> str
     name = ""
     if hasattr(user, 'first_name'): 
         name += user.first_name
@@ -13,7 +13,7 @@ def get_name_from_tg_user(user):
     return name.strip()
 
 
-def get_image_captcha() -> tuple[str, str]:
+def get_image_captcha(): # -> tuple[str, str]
     
     # Create images folder if it does not exist
     images_folder = Path('images')
