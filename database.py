@@ -36,33 +36,41 @@ class User(Base):
 
 Base.metadata.create_all(engine)
 
-session = Session(engine)
-
 
 def add_user(user):  # user: User
+    session = Session(engine)
     session.add(user)
     session.commit()
+    session.close()
 
 create_user = add_user
 
 
 def get_user(chat_id):  # chat_id: int -> User
+    session = Session(engine)
     user = session.scalars(select(User).filter_by(chat_id=chat_id)).first()
+    session.close()
     return user
 
 
 def get_all_users():  # -> list[User]
+    session = Session(engine)
     users = session.scalars(select(User)).all()
+    session.close()
     return users
 
 
 def get_banned_users():  # -> list[User]
+    session = Session(engine)
     users = session.scalars(select(User).filter_by(status=1)).all()
+    session.close()
     return users
 
 
 def update_user(user, **kwargs):  # user: User
+    session = Session(engine)
     session.add(user)
     for key, value in kwargs.items():
         setattr(user, key, value)
     session.commit()
+    session.close()
