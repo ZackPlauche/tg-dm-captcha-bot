@@ -42,7 +42,6 @@ session = Session(engine)
 def add_user(user):  # user: User
     session.add(user)
     session.commit()
-    session.close()
 
 create_user = add_user
 
