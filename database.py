@@ -6,7 +6,7 @@ from sqlalchemy.orm import declarative_base, Session
 
 from settings import MINUTES_UNTIL_KICK
 
-db_location = Path(__file__).resolve().parent.parent / 'db.sqlite3'
+db_location = Path(__file__).resolve().parent / 'db.sqlite3'
 db_type = 'sqlite'
 engine = create_engine(f'{db_type}:///{db_location}', echo=True, future=True)
 
