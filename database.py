@@ -29,10 +29,16 @@ class User(Base):
     def is_invalid(self):  # -> bool
         seconds_joined = (datetime.now() - self.timestamp).seconds
         seconds_until_kick = timedelta(minutes=MINUTES_UNTIL_KICK).seconds
-        return seconds_joined > seconds_until_kick and self.is_banned()
+        return seconds_joined > seconds_until_kick and self.is_new()
 
-    def is_banned(self):  # -> bool
+    def is_new(self):  # -> bool
         return self.status == 0
+
+    def is_verified(self):
+        return self.status == 1
+
+    def has_error(self):
+        return self.status == 2
 
 Base.metadata.create_all(engine)
 
@@ -60,7 +66,7 @@ def get_all_users():  # -> list[User]
     return users
 
 
-def get_banned_users():  # -> list[User]
+def get_verified_users():  # -> list[User]
     session = Session(engine)
     users = session.scalars(select(User).filter_by(status=1)).all()
     session.close()
