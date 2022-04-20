@@ -10,8 +10,6 @@ TELEGRAM_API_HASH = "5706e205c80a9f21c6f9edccb640dd5c"
 # Must be a public group. You can get this by using the IDBot (@myidbot) and running the /getgroupid@myidbot command
 TELEGRAM_GROUP_SUPERGROUP_ID = -1001675133744
 
-USER_STORAGE_CSV_PATH = BASE_DIR / 'ban_list.csv'
-
 MINUTES_UNTIL_KICK = 3
 
 # Must contain the "user_name", "group_name", and "minutes" names in brackets.
