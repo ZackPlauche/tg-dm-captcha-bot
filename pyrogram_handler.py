@@ -11,14 +11,15 @@ app = Client(
     api_hash=TELEGRAM_API_HASH
 )
 
+
 @app.on_message(filters.private)
-def handle_captcha(client, message):
+async def handle_captcha(client, message):
     try:
         user = get_user(chat_id=message.from_user.id)
         if user and str(user.code).strip() == str(message.text).strip():
             if user.status == 0:
-                client.send_message(chat_id=int(message.from_user.id), text="Done! Now you have access to the group")
-                client.restrict_chat_member(
+                await client.send_message(chat_id=int(message.from_user.id), text="Done! Now you have access to the group")
+                await client.restrict_chat_member(
                     chat_id=TELEGRAM_GROUP_SUPERGROUP_ID,
                     user_id=int(message.from_user.id),
                     permissions=ChatPermissions(
@@ -34,12 +35,12 @@ def handle_captcha(client, message):
                 )
                 update_user(user, status=1)
             elif user.status == 2:
-                client.send_message(chat_id=int(message.from_user.id), text="Time is left. Try to contact with admins")
+                await client.send_message(chat_id=int(message.from_user.id), text="Time is left. Try to contact with admins")
         elif user.status == 0:
             text = "Please write a message with the numbers and/or letters that appear in this image to verify that you are a human. " \
                    "If you don't solve this captcha in {minutes} minutes, you will be automatically kicked out of the group.".format(minutes=MINUTES_UNTIL_KICK)
             image_captcha_path, image_captcha_text = get_image_captcha()
-            client.send_photo(chat_id=message.chat.id, photo=image_captcha_path, caption=text)
+            await client.send_photo(chat_id=message.chat.id, photo=image_captcha_path, caption=text)
             update_user(user, code=image_captcha_text)
     except: 
         pass
