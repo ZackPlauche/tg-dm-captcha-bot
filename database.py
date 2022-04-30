@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import create_engine, Integer, Column, String, DateTime, select
 from sqlalchemy.orm import declarative_base, Session
 
-from settings import TELEGRAM_GROUP_MINUTES_UNTIL_KICK, DEBUG, GOOGLE_CLOUD_INFO
+from settings import MINUTES_UNTIL_KICK, DEBUG, GOOGLE_CLOUD_INFO
 
 DB_URLS = {
     'sqlite': 'sqlite+pysqlite:///{path}',
@@ -31,7 +31,7 @@ class User(Base):
 
     def is_invalid(self):  # -> bool
         seconds_joined = (datetime.now() - self.timestamp).seconds
-        seconds_until_kick = timedelta(minutes=TELEGRAM_GROUP_MINUTES_UNTIL_KICK).seconds
+        seconds_until_kick = timedelta(minutes=MINUTES_UNTIL_KICK).seconds
         return seconds_joined > seconds_until_kick and self.is_new()
 
     def is_new(self):  # -> bool
