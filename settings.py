@@ -15,7 +15,7 @@ TELEGRAM_API_HASH = "5706e205c80a9f21c6f9edccb640dd5c"
 TELEGRAM_GROUP_SUPERGROUP_ID = -1001675133744
 
 # Minutes until the bot kicks and unverified user from the group after join.
-M_GROUP_MINUTES_UNTIL_KICK = 3
+MINUTES_UNTIL_KICK = 3
 
 # Must contain the "user_name", "group_name", and "minutes" names in brackets.
 CAPTCHA_MESSAGE_TEMPLATE = """\
