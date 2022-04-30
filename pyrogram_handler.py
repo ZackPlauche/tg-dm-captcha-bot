@@ -5,11 +5,7 @@ from database import get_user, update_user
 from settings import TELEGRAM_API_ID, TELEGRAM_API_HASH, TELEGRAM_GROUP_SUPERGROUP_ID, MINUTES_UNTIL_KICK
 from utils import get_image_captcha
 
-app = Client(
-    "pyrogram",
-    api_id=TELEGRAM_API_ID,
-    api_hash=TELEGRAM_API_HASH
-)
+app = Client("pyrogram", api_id=TELEGRAM_API_ID, api_hash=TELEGRAM_API_HASH)
 
 
 @app.on_message(filters.private)
@@ -45,4 +41,6 @@ async def handle_captcha(client, message):
     except: 
         pass
 
-app.run()
+
+if __name__ == '__main__':
+    app.run()

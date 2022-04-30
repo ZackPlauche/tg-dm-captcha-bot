@@ -1,10 +1,7 @@
 import asyncio
-from datetime import datetime, timezone
-from time import sleep
+from datetime import datetime
 
 from pyrogram import Client
-from pyrogram.raw.functions.channels import GetAdminLog
-from pyrogram.raw.types import ChannelAdminLogEventsFilter
 from pyrogram.types import ChatPermissions, ChatEventFilter
 
 from database import get_all_users, update_user, get_user, add_user, User
@@ -16,12 +13,7 @@ async def check_user_status():
     for user in get_all_users():
         if user.is_invalid():
             try:
-                client = Client(
-                    "pyrogram_second",
-                    api_id=TELEGRAM_API_ID,
-                    api_hash=TELEGRAM_API_HASH
-                )
-
+                client = Client( "pyrogram_second", api_id=TELEGRAM_API_ID, api_hash=TELEGRAM_API_HASH)
                 await client.start()
                 await client.restrict_chat_member(
                     chat_id=int(TELEGRAM_GROUP_SUPERGROUP_ID),

@@ -1,17 +1,20 @@
 from datetime import datetime, timedelta
-from pathlib import Path
 
 from sqlalchemy import create_engine, Integer, Column, String, DateTime, select
 from sqlalchemy.orm import declarative_base, Session
 
-from settings import MINUTES_UNTIL_KICK
+from settings import TELEGRAM_GROUP_MINUTES_UNTIL_KICK, DEBUG, GOOGLE_CLOUD_INFO
 
-db_location = Path(__file__).resolve().parent / 'db.sqlite3'
-db_type = 'sqlite'
-engine = create_engine(f'{db_type}:///{db_location}', echo=True, future=True)
+DB_URLS = {
+    'sqlite': 'sqlite+pysqlite:///{path}',
+    'google_cloud_sql_internal': 'mysql+mysqldb://root@/{dbname}?unix_socket=/cloudsql/{projectid}:{instancename}'.format(**GOOGLE_CLOUD_INFO),
+    'google_cloud_sql_external': 'mysql+mysqldb://{user}:{password}@{host}:{port}/{dbname}'.format(**GOOGLE_CLOUD_INFO),
+}
+
+db_url = DB_URLS['google_cloud_sql_internal'] if not DEBUG else DB_URLS['google_cloud_sql_external']
+engine = create_engine(db_url, echo=True, future=True)  # seconds
 
 Base = declarative_base()
-
 
 class User(Base):
     __tablename__ = 'user'
@@ -19,8 +22,8 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     chat_id = Column(Integer, nullable=False)
     timestamp = Column(DateTime, nullable=False)
-    name = Column(String, nullable=False)
-    code = Column(String, nullable=False)
+    name = Column(String(255), nullable=False)
+    code = Column(String(255), nullable=False)
     status = Column(Integer, nullable=False)
 
     def __repr__(self):
@@ -28,7 +31,7 @@ class User(Base):
 
     def is_invalid(self):  # -> bool
         seconds_joined = (datetime.now() - self.timestamp).seconds
-        seconds_until_kick = timedelta(minutes=MINUTES_UNTIL_KICK).seconds
+        seconds_until_kick = timedelta(minutes=TELEGRAM_GROUP_MINUTES_UNTIL_KICK).seconds
         return seconds_joined > seconds_until_kick and self.is_new()
 
     def is_new(self):  # -> bool
@@ -80,3 +83,7 @@ def update_user(user, **kwargs):  # user: User
         setattr(user, key, value)
     session.commit()
     session.close()
+
+
+if __name__ == '__main__':
+    ...

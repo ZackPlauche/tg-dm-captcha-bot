@@ -32,5 +32,7 @@ test.py
 *.log
 logs/
 Pipfile
-settings.py
 images/
+local_settings.py
+GOOGLECLOUD.md
+.timetracker
