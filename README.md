@@ -37,7 +37,23 @@ It will prompt you to enter your bot token or phone number, then ask you to ente
 
 When you're done, the script will end and a `telethon.session` file and a `pyrogram.session` file will be created in your directory.
 
-### 4. Run The Bot
+
+### 4. Setup a MySQL Database
+
+You'll need to setup a MySQL database to store the user data. We decided to use MySQL instead of sqlite3 because sqlite3 databases lock with write functionality in multi-threaded applications.
+
+One you setup your database, fill in the `DATABASE_INFO` setting in settings.py.
+
+```python
+DATABASE_INFO = {
+    'user': 'root',  # Don't change
+    'password': '3o9L0klt3PNH8tNF',
+    'host': 'the api address of your database',
+    'port': 3306,  # This should stay be the same for all MySQL databases
+    'dbname': 'your_database_name',
+}
+```
+### 5. Run The Bot
 
 To run the bot fully, the `pygrogram_handler.py` and `check_user_status.py` files need to be running simultaneously.
 

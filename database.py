@@ -3,18 +3,13 @@ from datetime import datetime, timedelta
 from sqlalchemy import create_engine, Integer, Column, String, DateTime, select
 from sqlalchemy.orm import declarative_base, Session
 
-from settings import MINUTES_UNTIL_KICK, DEBUG, GOOGLE_CLOUD_INFO
+from settings import MINUTES_UNTIL_KICK, DATABASE_INFO
 
-DB_URLS = {
-    'sqlite': 'sqlite+pysqlite:///{path}',
-    'google_cloud_sql_internal': 'mysql+mysqldb://root@/{dbname}?unix_socket=/cloudsql/{projectid}:{instancename}'.format(**GOOGLE_CLOUD_INFO),
-    'google_cloud_sql_external': 'mysql+mysqldb://{user}:{password}@{host}:{port}/{dbname}'.format(**GOOGLE_CLOUD_INFO),
-}
-
-db_url = DB_URLS['google_cloud_sql_internal'] if not DEBUG else DB_URLS['google_cloud_sql_external']
+db_url = 'mysql+mysqldb://{user}:{password}@{host}:{port}/{dbname}'.format(**DATABASE_INFO)
 engine = create_engine(db_url, echo=True, future=True)  # seconds
 
 Base = declarative_base()
+
 
 class User(Base):
     __tablename__ = 'user'
@@ -83,7 +78,3 @@ def update_user(user, **kwargs):  # user: User
         setattr(user, key, value)
     session.commit()
     session.close()
-
-
-if __name__ == '__main__':
-    ...
