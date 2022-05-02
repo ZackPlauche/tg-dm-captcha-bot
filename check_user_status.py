@@ -5,7 +5,13 @@ from pyrogram import Client
 from pyrogram.types import ChatPermissions, ChatEventFilter
 
 from database import get_all_users, update_user, get_user, add_user, User
-from settings import TELEGRAM_API_ID, TELEGRAM_API_HASH, TELEGRAM_GROUP_SUPERGROUP_ID, MINUTES_UNTIL_KICK, CAPTCHA_VERIFY_INSTRUCTIONS_MESSAGE
+from settings import (
+    TELEGRAM_API_ID, 
+    TELEGRAM_API_HASH, 
+    TELEGRAM_GROUP_SUPERGROUP_ID, 
+    MINUTES_UNTIL_KICK, 
+    CAPTCHA_VERIFY_INSTRUCTIONS_MESSAGE
+)
 from utils import get_image_captcha, get_name_from_tg_user
 
 
@@ -69,11 +75,14 @@ async def check_new_users():
                                                                              minutes=MINUTES_UNTIL_KICK)
                         await client.send_photo(tg_user.id, image_captcha_path, caption=caption)
 
-                        new_user = User(chat_id=tg_user.id,
-                                        timestamp=datetime.now(),
-                                        name=get_name_from_tg_user(tg_user),
-                                        code=image_captcha_text,
-                                        status=0)
+                        # Add new user to the database
+                        new_user = User(
+                            chat_id=tg_user.id,
+                            timestamp=datetime.now(),
+                            name=get_name_from_tg_user(tg_user),
+                            code=image_captcha_text,
+                            status=0
+                        )
                         add_user(new_user)
     except Exception as e:
         print(e)

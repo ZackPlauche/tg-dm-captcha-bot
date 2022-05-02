@@ -2,7 +2,14 @@ from pyrogram import Client, filters
 from pyrogram.types import ChatPermissions
 
 from database import get_user, update_user
-from settings import CAPTCHA_FAILED_MESSAGE, KICK_MESSAGE, TELEGRAM_API_ID, TELEGRAM_API_HASH, TELEGRAM_GROUP_SUPERGROUP_ID, MINUTES_UNTIL_KICK, CAPTCHA_SUCCESS_MESSAGE
+from settings import (
+    CAPTCHA_FAILED_MESSAGE, 
+    KICK_MESSAGE, 
+    TELEGRAM_API_ID, 
+    TELEGRAM_API_HASH, 
+    TELEGRAM_GROUP_SUPERGROUP_ID, 
+    CAPTCHA_SUCCESS_MESSAGE
+)
 from utils import get_image_captcha
 
 app = Client("pyrogram", api_id=TELEGRAM_API_ID, api_hash=TELEGRAM_API_HASH)
