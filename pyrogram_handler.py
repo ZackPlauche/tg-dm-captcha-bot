@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import ChatPermissions
 
 from database import get_user, update_user
-from settings import TELEGRAM_API_ID, TELEGRAM_API_HASH, TELEGRAM_GROUP_SUPERGROUP_ID, MINUTES_UNTIL_KICK, CAPTCHA_SUCCESS_MESSAGE
+from settings import CAPTCHA_FAILED_MESSAGE, KICK_MESSAGE, TELEGRAM_API_ID, TELEGRAM_API_HASH, TELEGRAM_GROUP_SUPERGROUP_ID, MINUTES_UNTIL_KICK, CAPTCHA_SUCCESS_MESSAGE
 from utils import get_image_captcha
 
 app = Client("pyrogram", api_id=TELEGRAM_API_ID, api_hash=TELEGRAM_API_HASH)
@@ -31,12 +31,10 @@ async def handle_captcha(client, message):
                 )
                 update_user(user, status=1)
             elif user.status == 2:
-                await client.send_message(chat_id=int(message.from_user.id), text="Time is left. Try to contact with admins")
+                await client.send_message(chat_id=int(message.from_user.id), text=KICK_MESSAGE)
         elif user.status == 0:
-            text = "Please write a message with the numbers and/or letters that appear in this image to verify that you are a human. " \
-                   "If you don't solve this captcha in {minutes} minutes, you will be automatically kicked out of the group.".format(minutes=MINUTES_UNTIL_KICK)
             image_captcha_path, image_captcha_text = get_image_captcha()
-            await client.send_photo(chat_id=message.chat.id, photo=image_captcha_path, caption=text)
+            await client.send_photo(chat_id=message.chat.id, photo=image_captcha_path, caption=CAPTCHA_FAILED_MESSAGE)
             update_user(user, code=image_captcha_text)
     except: 
         pass

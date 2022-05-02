@@ -6,8 +6,8 @@ from captcha.image import ImageCaptcha
 
 def get_name_from_tg_user(user):  # -> str
     name = ""
-    attrs = ['first_name', 'last_name']
-    for attr in attrs:
+    name_attrs = ['first_name', 'last_name']
+    for attr in name_attrs:
         if hasattr(user, attr):
             if getattr(user, attr):
                 name += getattr(user, attr) + " "
