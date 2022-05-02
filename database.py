@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from sqlalchemy import create_engine, Integer, Column, String, DateTime, select
+from sqlalchemy import create_engine, Integer, BigInteger, Column, String, DateTime, select
 from sqlalchemy.orm import declarative_base, Session
 
 from settings import MINUTES_UNTIL_KICK, DATABASE_INFO
@@ -15,7 +15,7 @@ class User(Base):
     __tablename__ = 'user'
 
     id = Column(Integer, primary_key=True)
-    chat_id = Column(Integer, nullable=False)
+    chat_id = Column(BigInteger, nullable=False)
     timestamp = Column(DateTime, nullable=False)
     name = Column(String(255), nullable=False)
     code = Column(String(255), nullable=False)

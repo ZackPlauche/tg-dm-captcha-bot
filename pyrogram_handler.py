@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import ChatPermissions
 
 from database import get_user, update_user
-from settings import TELEGRAM_API_ID, TELEGRAM_API_HASH, TELEGRAM_GROUP_SUPERGROUP_ID, MINUTES_UNTIL_KICK
+from settings import TELEGRAM_API_ID, TELEGRAM_API_HASH, TELEGRAM_GROUP_SUPERGROUP_ID, MINUTES_UNTIL_KICK, CAPTCHA_SUCCESS_MESSAGE
 from utils import get_image_captcha
 
 app = Client("pyrogram", api_id=TELEGRAM_API_ID, api_hash=TELEGRAM_API_HASH)
@@ -14,7 +14,7 @@ async def handle_captcha(client, message):
         user = get_user(chat_id=message.from_user.id)
         if user and str(user.code).strip() == str(message.text).strip():
             if user.status == 0:
-                await client.send_message(chat_id=int(message.from_user.id), text="Done! Now you have access to the group")
+                await client.send_message(chat_id=int(message.from_user.id), text=CAPTCHA_SUCCESS_MESSAGE)
                 await client.restrict_chat_member(
                     chat_id=TELEGRAM_GROUP_SUPERGROUP_ID,
                     user_id=int(message.from_user.id),

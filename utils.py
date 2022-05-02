@@ -6,10 +6,11 @@ from captcha.image import ImageCaptcha
 
 def get_name_from_tg_user(user):  # -> str
     name = ""
-    if hasattr(user, 'first_name'): 
-        name += user.first_name
-    if hasattr(user, 'last_name'): 
-        name += f' {user.last_name}'
+    attrs = ['first_name', 'last_name']
+    for attr in attrs:
+        if hasattr(user, attr):
+            if getattr(user, attr):
+                name += getattr(user, attr) + " "
     return name.strip()
 
 
