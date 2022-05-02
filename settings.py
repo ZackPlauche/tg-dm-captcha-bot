@@ -13,7 +13,7 @@ CAPTCHA_VERIFY_INSTRUCTIONS_MESSAGE = (
     'If you don\'t solve this captcha in {minutes} minutes, you will be automatically kicked out of the group.'
 )
 
-CAPTCHA_SUCCESS_MESSAGE = "Done! Now you have access to the group"
+CAPTCHA_SUCCESS_MESSAGE = "Done! Now you have access to the group."
 
 
 DATABASE_INFO = {
