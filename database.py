@@ -38,6 +38,7 @@ class User(Base):
     def has_error(self):
         return self.status == 2
 
+
 Base.metadata.create_all(engine)
 
 
@@ -47,8 +48,6 @@ def add_user(user):  # user: User
     session.commit()
     session.close()
 
-create_user = add_user
-
 
 def get_user(chat_id):  # chat_id: int -> User
     session = Session(engine)
@@ -57,16 +56,10 @@ def get_user(chat_id):  # chat_id: int -> User
     return user
 
 
-def get_all_users():  # -> list[User]
+def get_users():  # -> list[User]
+    """Get all users from the database."""
     session = Session(engine)
     users = session.scalars(select(User)).all()
-    session.close()
-    return users
-
-
-def get_verified_users():  # -> list[User]
-    session = Session(engine)
-    users = session.scalars(select(User).filter_by(status=1)).all()
     session.close()
     return users
 

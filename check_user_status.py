@@ -4,7 +4,7 @@ from time import sleep
 from pyrogram import Client
 from pyrogram.types import ChatPermissions, ChatEventFilter
 
-from database import get_all_users, update_user, get_user, add_user, User
+from database import get_users, update_user, get_user, add_user, User
 from settings import (
     TELEGRAM_API_ID,
     TELEGRAM_API_HASH,
@@ -17,7 +17,7 @@ from utils import get_image_captcha, get_name_from_tg_user
 
 def check_user_status():
     print("check_user_status")
-    for user in get_all_users():
+    for user in get_users():
         if user.is_invalid():
             try:
                 client = Client("pyrogram_second", api_id=TELEGRAM_API_ID, api_hash=TELEGRAM_API_HASH)
