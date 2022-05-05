@@ -1,3 +1,4 @@
+import socket, errno
 from datetime import datetime
 from time import sleep
 
@@ -87,7 +88,15 @@ def check_new_users():
 
 
 while True:
-    check_new_users()
-    sleep(1)
-    check_user_status()
-    sleep(2)
+    try:
+        check_new_users()
+        sleep(1)
+        check_user_status()
+        sleep(2)
+    except socket.error as e:
+        print(e)
+    except IOError as e:
+        if e.errno == errno.EPIPE:
+            print(e)
+        else:
+            pass
